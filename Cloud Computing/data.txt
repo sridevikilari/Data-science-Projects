@@ -1,0 +1,7 @@
+VicRoads dataset URL used for this assignment is as follows:
+
+https://vicroadsopendatastorehouse.vicroads.vic.gov.au/opendata/Road_Safety/ACCIDENT.zip
+
+Given that the data load into the database tables are automated using the AWS glue jobs and the volume is little huge, we are keeping the above source URL itself.
+
+

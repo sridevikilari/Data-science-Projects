@@ -1,0 +1,421 @@
+job0-loadDataFromVicRoads:
+============================
+
+from botocore.vendored import requests
+from io import BytesIO
+import boto3
+import zipfile
+
+url = "https://vicroadsopendatastorehouse.vicroads.vic.gov.au/opendata/Road_Safety/ACCIDENT.zip"
+r = requests.get(url, stream=True)
+
+#session = boto3.Session()
+
+s3 = boto3.client('s3', use_ssl=False)
+s3_resource = boto3.resource('s3')
+
+my_bucket_name = 'assignment2-data-bucket'
+key = 'temp/ACCIDENT.zip' # key is the name of file on your bucket
+
+bucket = s3_resource.Bucket(my_bucket_name)
+
+#drop any existing objects from the temp and landing folders
+for obj in bucket.objects.filter(Prefix=''):
+    s3_resource.Object(bucket.name,obj.key).delete()
+    
+
+#upload zip file from the URL to S3
+bucket.upload_fileobj(r.raw, key)
+
+
+prefix      = "temp/"
+zipped_keys =  s3.list_objects_v2(Bucket=my_bucket_name, Prefix=prefix, Delimiter = "/")
+file_list = []
+for key in zipped_keys['Contents']:
+    file_list.append(key['Key'])
+    
+#Now create zip object one by one, this below is for 1st file in file_list
+zip_obj = s3_resource.Object(bucket_name=my_bucket_name, key=file_list[0])
+print (zip_obj)
+buffer = BytesIO(zip_obj.get()["Body"].read())
+
+z = zipfile.ZipFile(buffer)
+for filename in z.namelist():
+    file_info = z.getinfo(filename)
+    s3_resource.meta.client.upload_fileobj(
+        z.open(filename),
+        Bucket=my_bucket_name,
+        Key= f'{filename}')
+
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta content="IE=edge" http-equiv="X-UA-Compatible">
+<meta content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" name="viewport">
+<style>
+html, body {
+			height: 100%;
+}
+body {
+	width:100%;
+    margin: 0;
+    line-height: 1;
+    font-family: "avenir-roman", sans-serif;
+    background: #f9f9f9;
+    background-image: url(https://rosetta.slv.vic.gov.au/delivery/DeliveryManagerServlet?dps_func=stream&dps_pid=FL16128997);
+    position: absolute;
+    opacity: 0.9;
+    top: 0px;
+    left: 0px;
+    background-repeat: no-repeat;
+    background-position-y: 45px;
+    background-size: cover;
+	color:#333333;
+}
+.black_banner {    
+  background-color: #353735;
+  color: #fff;
+  text-align: center;
+  padding: 2.75rem 0rem 2.75rem 0rem;
+  font-size:3.75rem;
+}
+.black_footer {    
+  background-color: #353735;
+  color: #bcbcbc;
+  text-align: center;
+  font-size: 0.81em;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  padding: 1.75rem 0rem 1.75rem 0rem;
+}
+.large-font {
+  font-size: 24px;
+}
+.xlarge-font {
+  font-size: 42px
+}
+.column-33 {
+  float: left;
+  width: 33.33333%;
+  padding: 20px;
+}
+.parent-container {
+    width: auto;
+    height: auto;
+    margin:  6px;
+}
+.button {
+  border: none;
+  color: white;
+  display: block;
+  margin-top:10px;
+  margin-bottom:10px;
+  padding: 14px 28px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #d6b986;
+  text-decoration: none;
+  width: 150px;
+text-align:center;
+}
+.button a:hover {
+  background-color: #F6E98A;
+  color: black;
+}
+/* Float four columns side by side */
+.column {
+  float: left;
+  width: 100%;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+
+.row {margin: 100px;}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Responsive columns */
+@media screen and (max-width: 600px) {
+  .column {
+    width: 100%;
+    display: block;
+    margin-bottom: 20px;
+  }
+}
+
+/* Style the counter cards */
+.card {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  padding: 14px;
+  text-align: left;
+  background-color: #f1f1f1;
+  box-sizing: border-box;
+  min-height: 360px;
+  font-size:14px;
+}
+
+/* Position the navbar container inside the image */
+.container {
+  position: absolute;
+  width: auto;
+}
+
+/* The navbar */
+.topnav {
+  overflow: hidden;
+  background-color: #333;
+}
+
+/* Navbar links */
+.topnav a {
+  float: left;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+.topnav a:hover {
+  background-color: #ddd;
+  color: black;
+}
+</style>
+<title>Accident Analysis - Victoria</title>
+</head>
+<body>
+<div id="navbar" class="black_banner">Accident Analysis - Victoria</div>
+<div class="bg-img">
+  <div class="container">
+    <div class="topnav">
+      <a href="#section2">Home</a>
+
+    </div>
+  </div>
+</div>
+<div class="parent-container">
+<div class="row">
+	<div class="column">
+	  <div class="card">
+		  <h1 class="xlarge-font"><b>About</b></h1>
+		  <p>VicRoads provides crash statistics data to organizations, researchers, and the general public to help with education, research and the development of road safety programs and initiatives.
+
+The main objective of this project is to provide statistics and insights related to Victoria state road crashes to the public which is to educate and prevent any possible accidents in the future. Given the population of state is over 6 million, we anticipate that this application could be accessed by many people across the state over a period of time and so this application is designed accordingly to be able to scale up and down based on the demand. 
+
+This application processes the Victoria state crash history data from the year 2006 to date (2020). It extracts or pulls the information from <a href="https://www.vicroads.vic.gov.au/safety-and-road-rules/safety-statistics/crash-statistics">Vicroads</a> website. The dataset constitutes of 11 csv files with records ranging from 1,92,886 to 3,50,000. 
+
+AWS cloud computing services were designed and implemented to analyze such large datasets quickly and also to support the growth of data volumes and public access demand.
+</br>
+As per design, the CloudFront and Cognito services are used to handle the public access to this application. The user should sign up and authenticate the identity first, only then s/he should be able to access the statistics and insights published in QuickSight application related to road accidents of Victoria state. The website is powered by the Elastic Beanstalk service which automatically supports the capacity provisioning and health monitoring of the application. 
+
+While the Elastic Beanstalk handles the demand from the website or front end automatically, the backend part of the application must also be compatible and equally powerful enough to make this project success. As a result, the highly scalable (massively parallel architecture) Redshift database solution is used to store and provide the data to QuickSight application which is a powerful cloud business intelligence service for producing the right insights and forecast on time.
+
+Overall, with the objective of this project and its technology, more people will gain the knowledge of the Victoria crashes and the locations so that they could act carefully to prevent accidents in those regions.
+</p>
+		  </br><b>Click the below button to redirect to access the analysis of Victoria roads accident analysis.</b>
+		 
+		  <form action="https://d1n892ypt9usay.cloudfront.net">
+		  
+           <button type="submit" class="button">Access Analysis</button>
+  
+      </form>
+	  </div>
+	</div>
+</div> 
+</div>
+<div class="black_footer">&copy; Developed by: Divya Ulaganathan and Sridevi Pamarthi. All rights reserved.</div> 
+</body>
+</html>
+
+
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+	<title>QuickSight via Cognito</title>
+	<meta charset="UTF-8">
+    <link rel="shortcut icon" type="image/png" href="https://a0.awsstatic.com/main/images/site/favicon.ico"/>	
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/css/materialize.min.css" media="screen,projection">
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/js/materialize.min.js"></script>
+	<script src="https://sdk.amazonaws.com/js/aws-sdk-2.96.0.min.js"></script>
+	<script src="auth.js"></script>
+	<script src="aws-cognito-sdk.js"></script>
+	<script src="amazon-cognito-auth.min.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</head>
+
+<body  onload="onLoad()">
+    <nav>
+        <div class="nav-wrapper blue-grey darken-2"> 
+			<a href="https://aws.amazon.com/cognito/" target="_blank" class="hoverable"><img src="https://d2597oqac71veb.cloudfront.net/201406190823/images/cognito-icon.png" alt="Amazon Cognito" title="Amazon Cognito" style="width:75px;height:75px;"></a>
+			<a href="https://quicksight.aws/" target="_blank" class="hoverable"><img src="https://dpeefs3k5hlj8.cloudfront.net/images/quick_sight_default.f52ebfb7e602e4af4b460cbcd1b9d104.7.svg" alt="Amazon QuickSight" title="Amazon QuickSight" style="width:75px;height:75px;"></a>
+        </div>
+    </nav>
+	<br/>
+	<br/>
+	<br/>
+    <div class="container">
+		<div class="row">
+			<div class="col s12 m12 center-align">
+				<h5 id="statusNotAuth" title="Status">
+					Use Cognito User Pools credentials to access QuickSight
+				</h5>
+				<h5 id="statusAuth" title="Status">
+					You have Signed-In! Redirecting...
+				</h5>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col s12 m12 center">
+				<div class="loader center" id="loader"></div>
+				<div id="instructions">
+					<ul>
+						<li>If you are not redirected, access the following temporary link:</li>
+						<div id="consoleLink" class="center-align"></div>
+					</ul> 
+				</div>
+			</div>
+		</div>
+		<p></p>
+		<div class="row">
+			<div class="col s12 m12">
+				<div id="startButtons" class="center-align">
+					<div class="button">
+						<a class="waves-effect waves-light btn-large blue-grey darken-2 z-depth-5" id="signInButton" href="javascript:void(0)" title="Sign in">Sign In / Sign Up</a>
+					</div>
+				</div>
+			</div>
+		</div>
+
+    </div>
+	<script>
+	let thisUrlEncoded = encodeURIComponent("https://"+window.location.hostname);
+	let quicksightUrlEncoded = encodeURIComponent("https://ap-southeast-2.quicksight.aws.amazon.com/sn/dashboards/480c4e89-e3c1-4bc0-aa91-5c7091b5fcc0");
+	AWS.config.update({
+		region: region,
+		credentials: new AWS.CognitoIdentityCredentials({
+		IdentityPoolId: ''
+		})
+	});
+
+	AWSCognito.config.region = region;
+
+
+	AWSCognito.config.credentials = new AWS.CognitoIdentityCredentials({
+			IdentityPoolId: identityPool 
+	});
+
+	AWSCognito.config.update({accessKeyId: 'null', secretAccessKey: 'null'});
+	// Operations when the web page is loaded.
+	function onLoad() {
+		document.getElementById("statusNotAuth").style.display = 'block';
+		document.getElementById("statusAuth").style.display = 'none';
+		document.getElementById("instructions").style.display = 'none';
+		// Initiatlize CognitoAuth object
+		var auth = initCognitoSDK();
+		document.getElementById("signInButton").addEventListener("click", function() {
+			userButton(auth);
+		});
+		var curUrl = window.location.href;
+		auth.parseCognitoWebResponse(curUrl);
+	}
+
+  // Operations when signed in.
+  function showSignedIn(session) {
+		document.getElementById("statusNotAuth").style.display = 'none';
+		document.getElementById("statusAuth").style.display = 'block';
+		document.getElementById("signInButton").innerHTML = "Sign Out";
+		document.getElementById("loader").style.display = "block";
+	}
+
+  // Perform user operations.
+	function userButton(auth) {
+		var state = document.getElementById('signInButton').innerHTML;
+        var statestr = state.toString();
+		if (statestr.includes("Sign Out")) {
+			document.getElementById("signInButton").innerHTML = "Sign In";
+			auth.signOut();
+			showSignedOut();
+		} else {
+			auth.getSession();
+		}
+	}
+
+  // Initialize a cognito auth object.
+	function initCognitoSDK() {
+		let auth = new AWSCognito.CognitoIdentityServiceProvider.CognitoAuth(authData);
+		auth.userhandler = {
+			onSuccess: function(result) {
+				console.log("Cognito Sign in successful!");
+				showSignedIn(result);
+				let id_token = auth.signInUserSession.idToken.jwtToken;
+				let cognitoParams = {
+					IdentityPoolId: identityPool,
+					Logins: {}
+				};
+				cognitoParams.Logins["cognito-idp."+region+".amazonaws.com/"+poolId] = id_token;
+				AWS.config.credentials = new AWS.CognitoIdentityCredentials(cognitoParams);
+				AWS.config.getCredentials(function(){
+					let req = new XMLHttpRequest();
+					let creds = {
+						"sessionId":AWS.config.credentials.accessKeyId,
+						"sessionKey":AWS.config.credentials.secretAccessKey,
+						"sessionToken":AWS.config.credentials.sessionToken
+					}
+					let credsEncoded = encodeURIComponent(JSON.stringify(creds));
+					let uri = "https://signin.aws.amazon.com/federation?Action=getSigninToken&SessionDuration=43200&Session="+credsEncoded;
+					$.ajax({
+						type : 'POST',
+						url : endpoint,
+						headers : {
+							Authorization : id_token
+						},
+						data : uri,
+						success : function(response) {
+							let quickSightSSO = "https://signin.aws.amazon.com/federation?Action=login&Issuer="+thisUrlEncoded+"&Destination="+quicksightUrlEncoded+"&SigninToken="+response.SigninToken
+							console.log("Federated Sign In Token: "+response.SigninToken);
+							console.log("AWS Console Sign In URL: "+quickSightSSO);
+							window.location = quickSightSSO;
+							document.getElementById("consoleLink").innerHTML = "<a href='"+quickSightSSO+"'>"+"https://ap-southeast-2.quicksight.aws.amazon.com/sn/dashboards/480c4e89-e3c1-4bc0-aa91-5c7091b5fcc0"+"</a>";
+							document.getElementById("loader").style.display = "none";
+							document.getElementById("instructions").style.display = 'block';
+						},
+						error : function(xhr, status, error) {
+							var err = eval(xhr.responseText);
+							console.log(JSON.stringify(xhr)); 
+							if(xhr.status == "0"){
+								document.getElementById("statusAuth").innerHTML = "<h5>Token Expired or Invalid! Signing Out...</h5>"
+								auth.signOut();
+							}                  
+						}
+					});
+					
+				});
+			},
+			onFailure: function(err) {
+				console.log("Error!" + err);
+				document.getElementById("statusAuth").innerHTML = "<h5>Token Expired or Invalid! Signing Out...</h5>"
+				auth.signOut();
+			}
+		};
+		// The default response_type is "token", uncomment the next line will make it be "code".
+		// auth.useCodeGrantFlow();
+		return auth;
+	}
+	</script>
+</body>
+</html>
